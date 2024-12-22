@@ -1,14 +1,13 @@
 import time
 import serial
 import adafruit_fingerprint
-import psycopg2
-from psycopg2 import sql
 from datetime import datetime
-import json
+import requests
 
 
 FINGERPRINT_PORT = "COM5"
 FINGERPRINT_BAUDRATE = 57600
+API_BASE_URL = "http://172.20.10.2:8000"
 
 def datetime_to_iso(obj):
     if isinstance(obj, datetime):
@@ -25,32 +24,32 @@ def get_fingerprint(finger):
         return False
     return True
 
-def listen_for_fingerprint(finger, db_connection, latest_fingerprint_data):
+def get_employee_by_fingerprint(fingerprint_id):
+    """Fetch employee data from API using fingerprint ID"""
+    try:
+        response = requests.get(f"{API_BASE_URL}/employee/get/fingerprint_id/{fingerprint_id}/")
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except requests.RequestException as e:
+        print(f"API request failed: {str(e)}")
+        return None
+
+def listen_for_fingerprint(finger, latest_fingerprint_data):
     print("Listening for fingerprints. Press Ctrl+C to exit.")
     try:
         while True:
             if get_fingerprint(finger):
                 print(f"Fingerprint found! ID #{finger.finger_id} with confidence {finger.confidence}")
-
-                cursor = db_connection.cursor()
                 
-                # Fetch user data from api_employee table
-                cursor.execute("SELECT * FROM api_employee WHERE fingerprint_id = %s", (finger.finger_id,))
-                user_data = cursor.fetchone()
-
-                cursor.close()
+                # Fetch user data from API instead of database
+                user_data = get_employee_by_fingerprint(finger.finger_id)
 
                 if user_data:
-                    # Convert user_data to a dictionary for easier API response handling
-                    columns = [desc[0] for desc in cursor.description]
-                    user_dict = dict(zip(columns, user_data))
-                    print("User data:", user_dict)
-                    # Convert datetime objects to ISO format strings
-                    latest_fingerprint_data.value = json.loads(json.dumps(user_dict, default=datetime_to_iso))
-
-                    # Removed the wait time after sending data
+                    print("User data:", user_data)
+                    latest_fingerprint_data.value = user_data
                 else:
-                    print("User not found in the database")
+                    print("User not found in the API")
                     latest_fingerprint_data.value = {"error": "User not found"}
             else:
                 print("Fingerprint not found")

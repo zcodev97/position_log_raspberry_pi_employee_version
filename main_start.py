@@ -3,7 +3,6 @@ from flask import Flask, jsonify, Response, render_template
 from flask_cors import CORS
 import json
 import time
-import psycopg2
 from multiprocessing import Process, Manager, freeze_support
 from fingerprint_handler import listen_for_fingerprint, initialize_fingerprint
 from card_reader_handler import listen_for_card_swipe, initialize_card_reader
@@ -107,15 +106,13 @@ def verify_devices():
     
     return True
 
-def fingerprint_process_function(db_connection_params, shared_data):
+def fingerprint_process_function(shared_data):
     finger = initialize_fingerprint()  # Initialize within the process
-    db_connection = psycopg2.connect(**db_connection_params)
-    listen_for_fingerprint(finger, db_connection, shared_data)
+    listen_for_fingerprint(finger, shared_data)
 
-def card_process_function(db_connection_params, shared_data):
+def card_process_function(shared_data):
     card_reader = initialize_card_reader()  # Initialize within the process
-    db_connection = psycopg2.connect(**db_connection_params)
-    listen_for_card_swipe(card_reader, db_connection, shared_data)
+    listen_for_card_swipe(card_reader, shared_data)
 
 def main():
     global latest_fingerprint_data, latest_card_data
@@ -130,15 +127,6 @@ def main():
     latest_fingerprint_data = manager.Value(str, '{}')
     latest_card_data = manager.Value(str, '{}')
 
-    # Database connection parameters
-    db_connection_params = {
-        "dbname": "position_log",
-        "user": "postgres",
-        "password": "admin",
-        "host": "localhost",
-        "port": "5432"
-    }
-
     # Start the Flask server in a separate thread
     web_thread = threading.Thread(target=web_server_thread)
     web_thread.daemon = True
@@ -146,12 +134,12 @@ def main():
 
     # Start listening for fingerprints in a separate process
     fingerprint_process = Process(target=fingerprint_process_function, 
-                                args=(db_connection_params, latest_fingerprint_data))
+                                args=(latest_fingerprint_data,))
     fingerprint_process.start()
 
     # Start listening for card swipes in a separate process
     card_process = Process(target=card_process_function, 
-                        args=(db_connection_params, latest_card_data))
+                        args=(latest_card_data,))
     card_process.start()
 
     try:

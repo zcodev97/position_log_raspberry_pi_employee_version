@@ -2,7 +2,6 @@ import time
 import serial
 import adafruit_pn532.uart
 import winsound
-import psycopg2
 import json
 from datetime import datetime, timedelta
 import serial
@@ -11,7 +10,7 @@ import requests
 # NFC reader setup
 CARD_READER_PORT = 'COM6'
 CARD_READER_BAUDRATE = 115200
-
+API_BASE_URL = "http://172.20.10.2:8000"
 
 # Function to convert datetime objects to ISO format strings
 def datetime_to_iso(obj):
@@ -45,7 +44,7 @@ def uid_to_string(uid):
 
 # Function to get user data from the API
 def get_user_data(card_id):
-    api_url = f"http://172.20.10.2:8000/employee/get/card_id/{card_id}/"
+    api_url = f"{API_BASE_URL}/employee/get/card_id/{card_id}/"
     try:
         response = requests.get(api_url)
         if response.status_code == 200:
