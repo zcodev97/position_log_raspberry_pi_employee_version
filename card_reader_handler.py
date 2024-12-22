@@ -5,16 +5,13 @@ import winsound
 import psycopg2
 import json
 from datetime import datetime, timedelta
+import serial
+import requests
 
-# Database connection function
-def get_db_connection():
-    return psycopg2.connect(
-        dbname="position_log",
-        user="postgres",
-        password="admin",
-        host="localhost",
-        port="5432"
-    )
+# NFC reader setup
+CARD_READER_PORT = 'COM6'
+CARD_READER_BAUDRATE = 115200
+
 
 # Function to convert datetime objects to ISO format strings
 def datetime_to_iso(obj):
@@ -22,48 +19,45 @@ def datetime_to_iso(obj):
         return obj.isoformat()
     raise TypeError(f"Object of type {obj.__class__.__name__} is not JSON serializable")
 
-# NFC reader setup
-serial_port = 'COM10'
-baudrate = 115200
+
 
 def setup_nfc_reader():
-    uart = serial.Serial(serial_port, baudrate=baudrate, timeout=1)
-    pn532 = adafruit_pn532.uart.PN532_UART(uart, debug=False)
-    
-    ic, ver, rev, support = pn532.firmware_version
-    print('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
-    
-    pn532.SAM_configuration()
-    print('Waiting for an ISO14443A Card...')
-    return pn532
+    while True:
+        try:
+            uart = serial.Serial(CARD_READER_PORT, baudrate=CARD_READER_BAUDRATE, timeout=1)
+            pn532 = adafruit_pn532.uart.PN532_UART(uart, debug=False)
+            
+            ic, ver, rev, support = pn532.firmware_version
+            print('Found PN532 with firmware version: {0}.{1}'.format(ver, rev))
+            
+            pn532.SAM_configuration()
+            print('Card reader successfully connected on port', CARD_READER_PORT)
+            print('Waiting for an ISO14443A Card...')
+            return pn532
+        except (serial.SerialException, OSError) as e:
+            print(f"Unable to connect to card reader on port {CARD_READER_PORT}: {e}")
+            print("Waiting for card reader to be connected...")
+            time.sleep(2)  # Wait for 2 seconds before trying again
 
 # Function to convert UID to string format
 def uid_to_string(uid):
     return ''.join([format(i, '02X') for i in uid])
 
-# Function to get user data from the database
+# Function to get user data from the API
 def get_user_data(card_id):
-    conn = get_db_connection()
+    api_url = f"http://172.20.10.2:8000/employee/get/card_id/{card_id}/"
     try:
-        cursor = conn.cursor()
-        
-        # Fetch user data from api_employee table
-        cursor.execute("SELECT * FROM api_employee WHERE card_id = %s", (card_id,))
-        user_data = cursor.fetchone()
-
-        if user_data:
-            # Convert user_data to a dictionary for easier API response handling
-            columns = [desc[0] for desc in cursor.description]
-            user_dict = dict(zip(columns, user_data))
-            print("User data:", user_dict)
-            # Convert datetime objects to ISO format strings
-            return json.loads(json.dumps(user_dict, default=datetime_to_iso))
+        response = requests.get(api_url)
+        if response.status_code == 200:
+            user_data = response.json()
+            print("User data:", user_data)
+            return user_data
         else:
-            print("User not found in the database")
+            print(f"API request failed with status code: {response.status_code}")
             return None
-    finally:
-        cursor.close()
-        conn.close()
+    except requests.RequestException as e:
+        print(f"Error making API request: {e}")
+        return None
 
 
 
@@ -81,7 +75,7 @@ def can_read_card(card_id):
 def initialize_card_reader():
     return setup_nfc_reader()
 
-def listen_for_card_swipe(pn532, db_connection, latest_card_data):
+def listen_for_card_swipe(pn532, latest_card_data):
     print("Listening for card swipes. Press Ctrl+C to exit.")
     
     while True:
@@ -109,19 +103,17 @@ def listen_for_card_swipe(pn532, db_connection, latest_card_data):
         
         except (serial.SerialException, OSError) as e:
             print(f"Error communicating with NFC reader: {e}")
-            print("Attempting to reconnect...")
-            time.sleep(5)
-            pn532 = setup_nfc_reader()
+            print("Waiting for card reader to reconnect...")
+            pn532 = setup_nfc_reader()  # This will now wait until connection is restored
 
 # Modify the main function to use the new listen_for_card_swipe function
 def main():
     pn532 = initialize_card_reader()
     
-    # Create a mock db_connection and latest_card_data for testing
-    db_connection = get_db_connection()
+    # Remove db_connection creation
     latest_card_data = type('obj', (object,), {'value': b''})()
 
-    listen_for_card_swipe(pn532, db_connection, latest_card_data)
+    listen_for_card_swipe(pn532, latest_card_data)
 
 if __name__ == "__main__":
     main()

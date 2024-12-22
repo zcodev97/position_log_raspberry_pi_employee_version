@@ -6,6 +6,10 @@ from psycopg2 import sql
 from datetime import datetime
 import json
 
+
+FINGERPRINT_PORT = "COM5"
+FINGERPRINT_BAUDRATE = 57600
+
 def datetime_to_iso(obj):
     if isinstance(obj, datetime):
         return obj.isoformat()
@@ -55,12 +59,22 @@ def listen_for_fingerprint(finger, db_connection, latest_fingerprint_data):
         print("\nFingerprint listening stopped.")
         latest_fingerprint_data.value = {"error": "Listening stopped"}
 
-def initialize_fingerprint(port="COM7", baudrate=57600):
-    uart = serial.Serial(port, baudrate=baudrate, timeout=1)
-    finger = adafruit_fingerprint.Adafruit_Fingerprint(uart)
+def initialize_fingerprint(port=FINGERPRINT_PORT, baudrate=FINGERPRINT_BAUDRATE):
+    """Initialize fingerprint sensor with infinite retry until connected"""
+    while True:
+        try:
+            print(f"Attempting to connect to fingerprint sensor on {port}...")
+            uart = serial.Serial(port, baudrate=baudrate, timeout=1)
+            finger = adafruit_fingerprint.Adafruit_Fingerprint(uart)
 
-    if finger.read_templates() != adafruit_fingerprint.OK:
-        raise RuntimeError("Failed to read templates")
+            if finger.read_templates() != adafruit_fingerprint.OK:
+                raise RuntimeError("Failed to read templates")
 
-    print("Fingerprint templates:", finger.templates)
-    return finger
+            print(f"Successfully connected to fingerprint sensor on {port}")
+            print("Fingerprint templates:", finger.templates)
+            return finger
+
+        except (serial.SerialException, RuntimeError) as e:
+            print(f"Failed to connect: {str(e)}")
+            print("Waiting for fingerprint sensor to be connected...")
+            time.sleep(2)  # Wait for 2 seconds before trying again
