@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtCore import QUrl, Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QDialog, QLineEdit, QLabel, QMessageBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QLineEdit, QLabel, QMessageBox
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 
 class PasswordDialog(QDialog):
@@ -22,7 +22,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Web View Desktop App")
-        
+        self.setFixedSize(1024, 600)  # Set fixed window size
+
         # Create a central widget and layout
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
@@ -32,29 +33,41 @@ class MainWindow(QMainWindow):
         self.web_view.setUrl(QUrl("http://127.0.0.1:5000/atco_check_page.html"))
         layout.addWidget(self.web_view)
         
-        # Create and add the refresh button {{ edit_1 }}
+        # Create a horizontal layout for buttons
+        button_layout = QHBoxLayout()
+        button_layout.addStretch()  # Add spacing from left
+        
+        # Create and add the refresh button
         self.refresh_button = QPushButton("Refresh", self)
-        self.refresh_button.clicked.connect(self.refresh_page)  # Connect to refresh method
-        layout.addWidget(self.refresh_button, alignment=Qt.AlignCenter)  # Center the button {{ edit_2 }}
+        self.refresh_button.clicked.connect(self.refresh_page)
+        self.refresh_button.setFixedSize(120, 40)  # Match close button size
+        button_layout.addWidget(self.refresh_button)
+        
+        button_layout.addSpacing(20)  # Add 20px spacing between buttons
         
         # Create and add the close button
         self.close_button = QPushButton("Close")
         self.close_button.setStyleSheet("""
             QPushButton {
-                background-color: #ff4c4c;  /* Light red background */
+                background-color: #ff4c4c;
                 color: white; 
                 font-weight: bold; 
                 font-size: 18px;
-                border-radius: 10px;  /* Rounded corners */
-                padding: 10px;  /* Padding for a better look */
+                border-radius: 10px;
+                padding: 10px;
             }
             QPushButton:hover {
-                background-color: #ff1a1a;  /* Darker red on hover */
+                background-color: #ff1a1a;
             }
-        """)  # {{ edit_3 }}
-        self.close_button.setFixedSize(120, 40)  # Set a fixed size for the button {{ edit_4 }}
+        """)
+        self.close_button.setFixedSize(120, 40)
         self.close_button.clicked.connect(self.close_application)
-        layout.addWidget(self.close_button, alignment=Qt.AlignCenter)  # Center the button {{ edit_5 }}
+        button_layout.addWidget(self.close_button)
+        
+        button_layout.addStretch()  # Add spacing from right
+        
+        # Add the button layout to the main layout
+        layout.addLayout(button_layout)
         
         self.setCentralWidget(central_widget)
         

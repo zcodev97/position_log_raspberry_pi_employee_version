@@ -3,247 +3,51 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="{{ url_for('static', filename='js/tailwindcss.js') }}"></script>
+    <script>
+      const SERVER_URL = "http://192.168.0.194:8000";
+    </script>
     <title>User Information</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        margin: 0;
-        padding: 10px;
-        background-color: #f0f2f5;
-        align-items: center;
-        text-align: center;
-      }
-      .container {
-        max-width: 800px;
-        margin: 0 auto;
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        padding: 20px;
-      }
-      h1 {
-        color: #1877f2;
-        margin-bottom: 20px;
-      }
-      #status {
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: #606770;
-      }
-      #fingerprintData {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: center;
-        gap: 20px;
-        padding: 20px;
-      }
-      .plus-button {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        background-color: #1877f2;
-        color: white;
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        text-align: center;
-        line-height: 60px;
-        font-size: 30px;
-        text-decoration: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: background-color 0.3s;
-      }
-      .plus-button:hover {
-        background-color: #166fe5;
-      }
-      nav {
-        margin-bottom: 10px;
-      }
-      nav a {
-        color: #1877f2;
-        text-decoration: none;
-        font-weight: bold;
-      }
-      nav a:hover {
-        text-decoration: underline;
-      }
-      /* Add these styles to your existing styles */
-      .user-cards {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 2px;
-        margin-top: 5px;
-        justify-content: center;
-      }
-      .user-card {
-        flex: 0 0 auto;
-        width: 120px;
-        background-color: #ffffff;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        padding: 10px;
-        text-align: center;
-        transition: transform 0.3s ease;
-      }
-      .user-card:hover {
-        transform: translateY(-5px);
-      }
-      .user-card img {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-bottom: 5px;
-      }
-      .user-card h3 {
-        margin: 5px 0;
-        font-size: 24px;
-        color: #1877f2;
-      }
-      .user-card p {
-        margin: 5px 0;
-        font-size: 24px;
-        color: #606770;
-      }
-      #timer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 10px;
-        font-size: 14px;
-        color: #606770;
-      }
-      #timer .time {
-        flex: 1;
-      }
-      #timer .duration {
-        font-size: 24px;
-        font-weight: bold;
-        color: #1877f2;
-        margin: 0 5px;
-      }
-      #timer .utc {
-        text-align: left;
-        font-size: 24px;
-      }
-      #timer .local {
-        text-align: right;
-        font-size: 24px;
-      }
-      #stopButton {
-        display: none;
-        margin: 20px auto;
-        padding: 12px 24px;
-        font-size: 18px;
-        font-weight: bold;
-        color: #ffffff;
-        background-color: #dc3545;
-        border: none;
-        border-radius: 30px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
-      #stopButton:hover {
-        background-color: #c82333;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-      }
-      #stopButton:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .remove-button {
-        position: absolute;
-        top: 2px;
-        right: 2px;
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 18px;
-        height: 18px;
-        font-size: 12px;
-        line-height: 1;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
-      .remove-button:hover {
-        background-color: #c82333;
-      }
-      .user-card .remove-button {
-        display: block; /* Initially visible */
-      }
-      .session-started .user-card .remove-button {
-        display: none; /* Hidden when session starts */
-      }
-      /* Add smooth scrolling for the container */
-      #fingerprintData {
-        overflow-x: auto;
-        scroll-behavior: smooth;
-      }
-      /* Hide scrollbar for Chrome, Safari and Opera */
-      #fingerprintData::-webkit-scrollbar {
-        display: none;
-      }
-      /* Hide scrollbar for IE, Edge and Firefox */
-      #fingerprintData {
-        -ms-overflow-style: none; /* IE and Edge */
-        scrollbar-width: none; /* Firefox */
-      }
-      /* Fancy start button */
-      #startButton {
-        display: block;
-        margin: 20px auto;
-        padding: 12px 24px;
-        font-size: 24px;
-        font-weight: bold;
-        color: #ffffff;
-        background-color: #1877f2;
-        border: none;
-        border-radius: 30px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
-      #startButton:hover {
-        background-color: #166fe5;
-        transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-      }
-      #startButton:active {
-        transform: translateY(0);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-    </style>
   </head>
-  <body>
-    <div class="container">
-      <h1>Session Information</h1>
-      <nav style="text-align: left">
+  <body
+    class="font-sans leading-relaxed m-0 p-2.5 bg-[#f0f2f5] items-center text-center"
+  >
+    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-sm p-5">
+      <h1 class="text-[#1877f2] mb-5">Session Information</h1>
+      <nav class="mb-2.5 text-left">
         <a
-          style="
-            border: 1px solid rgb(0, 119, 255);
-            border-radius: 10px;
-            padding: 5px;
-            text-decoration: none;
-          "
+          class="border border-[#0077ff] rounded-lg p-1.5 no-underline text-[#1877f2] font-bold hover:underline"
           href="./atco_check_page.html"
           onclick="localStorage.clear()"
-          >BACK
-        </a>
+          >BACK</a
+        >
       </nav>
-      <div id="status" style="display: none">Waiting for user data...</div>
-      <div id="fingerprintData"></div>
-      <button id="startButton" style="display: none">Start Session</button>
-      <button id="stopButton" style="display: none">Stop Session</button>
+      <div id="status" class="font-bold mb-2.5 text-[#606770]">
+        Waiting for user data...
+      </div>
+      <div
+        id="fingerprintData"
+        class="flex flex-wrap justify-center gap-5 p-5 overflow-x-auto scroll-smooth"
+      >
+        <!-- User cards will be inserted here -->
+      </div>
+      <button
+        id="startButton"
+        class="hidden mx-auto my-5 py-3 px-6 text-2xl font-bold text-white bg-[#1877f2] rounded-full cursor-pointer transition-all duration-300 ease-in-out shadow-md hover:bg-[#166fe5] hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-sm"
+      >
+        Start Session
+      </button>
+      <button
+        id="stopButton"
+        class="hidden mx-auto my-5 py-3 px-6 text-lg font-bold text-white bg-[#dc3545] rounded-full cursor-pointer transition-all duration-300 ease-in-out shadow-md hover:bg-[#c82333] hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 active:shadow-sm"
+      >
+        Stop Session
+      </button>
     </div>
 
     <script>
       const statusElement = document.getElementById("status");
       const dataElement = document.getElementById("fingerprintData");
-      const container = document.querySelector(".container");
 
       // Replace with your actual server address and port
       const eventSource = new EventSource(
@@ -349,14 +153,15 @@
       }
 
       function addUserCard(user, index) {
-        const imageUrl = `http://127.0.0.1:8000/media/${user.image}`;
+        const imageUrl = `${user.image}`;
         const userCard = document.createElement("div");
-        userCard.className = "user-card";
+        userCard.className =
+          "relative w-30 bg-white rounded-lg shadow-md p-2.5 text-center transition-transform duration-300 ease-in-out hover:-translate-y-1.5";
         userCard.innerHTML = `
-          <button class="remove-button" onclick="removeUser(${index})">×</button>
-          <img src="${imageUrl}" alt="${user.username}'s profile picture">
-          <h3>${user.user_type}</h3>
-          <p>${user.username}</p>
+          <button class="absolute top-0.5 right-0.5 bg-[#dc3545] text-white border-none rounded-full w-4.5 h-4.5 text-xs leading-none cursor-pointer transition-colors duration-300 hover:bg-[#c82333]" onclick="removeUser(${index})">×</button>
+          <img src="${imageUrl}" alt="${user.username}'s profile picture" class="w-20 h-20 rounded-full object-cover mb-1.5 mx-auto">
+          <h3 class="m-1.5 text-2xl text-[#1877f2]">${user.user_type}</h3>
+          <p class="m-1.5 text-2xl text-[#606770]">${user.username}</p>
         `;
         dataElement.appendChild(userCard);
       }
@@ -366,10 +171,10 @@
         if (userCard) {
           const imageUrl = `http://127.0.0.1:8000/media/${user.image}`;
           userCard.innerHTML = `
-            <button class="remove-button" onclick="removeUser(${index})">×</button>
-            <img src="${imageUrl}" alt="${user.username}'s profile picture">
-            <h3>${user.user_type}</h3>
-            <p>${user.username}</p>
+            <button class="absolute top-0.5 right-0.5 bg-[#dc3545] text-white border-none rounded-full w-4.5 h-4.5 text-xs leading-none cursor-pointer transition-colors duration-300 hover:bg-[#c82333]" onclick="removeUser(${index})">×</button>
+            <img src="${imageUrl}" alt="${user.username}'s profile picture" class="w-20 h-20 rounded-full object-cover mb-1.5 mx-auto">
+            <h3 class="m-1.5 text-2xl text-[#1877f2]">${user.user_type}</h3>
+            <p class="m-1.5 text-2xl text-[#606770]">${user.username}</p>
           `;
         }
       }
@@ -395,33 +200,39 @@
       const startButton = document.getElementById("startButton");
       startButton.addEventListener("click", startSession);
 
-      function startSession() {
-        sessionStarted = true;
-        sessionComplete = true;
-        eventSource.close();
-        sessionStartTime = new Date();
-        startTimer();
-        checkIn();
-        startButton.style.display = "none";
-        stopButton.style.display = "block";
-        updateDisplay();
-        statusElement.textContent = "Session started.";
-        document.querySelector(".container").classList.add("session-started");
+      async function startSession() {
+        try {
+          sessionStarted = true;
+          sessionComplete = true;
+          eventSource.close();
+          sessionStartTime = new Date();
+          startTimer();
+          await checkIn();
+          startButton.style.display = "none";
+          stopButton.style.display = "block";
+          updateDisplay();
+          statusElement.textContent = "Session started.";
+        } catch (error) {
+          console.error("Error starting session:", error);
+          statusElement.textContent =
+            "Failed to start session. Please try again.";
+          // Reset session state on error
+          sessionStarted = false;
+          sessionComplete = false;
+          sessionStartTime = null;
+        }
       }
 
       async function checkIn() {
         const userIds = sessionData.map((user) => user.id);
         try {
-          const response = await fetch(
-            "http://localhost:8000/session/check-in/",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ users: userIds }),
-            }
-          );
+          const response = await fetch(`${SERVER_URL}/session/check-in/`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ users: userIds, position: "ACC" }),
+          });
 
           if (!response.ok) {
             throw new Error("Check-in failed");
@@ -444,16 +255,13 @@
         }
 
         try {
-          const response = await fetch(
-            "http://localhost:8000/session/check-out/",
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ id: sessionId }),
-            }
-          );
+          const response = await fetch(`${SERVER_URL}/session/check-out/`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ id: sessionId, position: "ACC" }),
+          });
 
           if (!response.ok) {
             throw new Error("Check-out failed");
@@ -490,13 +298,12 @@
           clearInterval(timerInterval);
           stopButton.style.display = "none";
           statusElement.textContent = "Session ended. Check-out successful.";
-          document
-            .querySelector(".container")
-            .classList.remove("session-started");
-          // Clear session data from local storage
           localStorage.removeItem("sessionData");
           sessionData = [];
           updateDisplay();
+
+          const timerElement = document.getElementById("timer");
+          if (timerElement) timerElement.remove();
         } else {
           statusElement.textContent = "No active session to stop.";
         }
@@ -506,8 +313,11 @@
 
       function startTimer() {
         const timerElement = document.createElement("div");
+        sessionStartTime = new Date();
         timerElement.id = "timer";
-        container.appendChild(timerElement);
+        timerElement.className =
+          "flex justify-between items-center mt-2.5 text-sm text-[#606770]";
+        document.querySelector(".max-w-3xl").appendChild(timerElement);
 
         function updateTimer() {
           const now = new Date();
@@ -519,11 +329,13 @@
           const utcString = now.toUTCString();
 
           timerElement.innerHTML = `
-            <div class="time utc">UTC: ${utcString}</div>
-            <div class="duration">${hours.toString().padStart(2, "0")}:${minutes
+            <div class="flex-1 text-left text-2xl">UTC: ${utcString}</div>
+            <div class="text-2xl font-bold text-[#1877f2] mx-1.5">${hours
+              .toString()
+              .padStart(2, "0")}:${minutes
             .toString()
             .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}</div>
-            <div class="time local">Local: ${localString}</div>
+            <div class="flex-1 text-right text-2xl">Local: ${localString}</div>
           `;
         }
 

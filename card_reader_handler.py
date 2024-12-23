@@ -6,11 +6,15 @@ import json
 from datetime import datetime, timedelta
 import serial
 import requests
+from dotenv import load_dotenv
+import os
+load_dotenv()
+API_BASE_URL = os.getenv('SERVER_URL')
 
 # NFC reader setup
 CARD_READER_PORT = 'COM6'
 CARD_READER_BAUDRATE = 115200
-API_BASE_URL = "http://172.20.10.2:8000"
+ 
 
 # Function to convert datetime objects to ISO format strings
 def datetime_to_iso(obj):
@@ -36,7 +40,7 @@ def setup_nfc_reader():
         except (serial.SerialException, OSError) as e:
             print(f"Unable to connect to card reader on port {CARD_READER_PORT}: {e}")
             print("Waiting for card reader to be connected...")
-            time.sleep(2)  # Wait for 2 seconds before trying again
+            time.sleep(1)  # Wait for 2 seconds before trying again
 
 # Function to convert UID to string format
 def uid_to_string(uid):
@@ -45,12 +49,11 @@ def uid_to_string(uid):
 # Function to get user data from the API
 def get_user_data(card_id):
     api_url = f"{API_BASE_URL}/employee/get/card_id/{card_id}/"
+
     try:
         response = requests.get(api_url)
         if response.status_code == 200:
-            user_data = response.json()
-            print("User data:", user_data)
-            return user_data
+            return response.json()
         else:
             print(f"API request failed with status code: {response.status_code}")
             return None
@@ -92,6 +95,7 @@ def listen_for_card_swipe(pn532, latest_card_data):
                         
                         # Update the latest_card_data
                         latest_card_data.value = json.dumps(user_data).encode()
+           
                     else:
                         print("Card not registered in the database")
                         winsound.Beep(500, 500)  # Lower pitch for unregistered card

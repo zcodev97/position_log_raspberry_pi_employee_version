@@ -3,11 +3,13 @@ import serial
 import adafruit_fingerprint
 from datetime import datetime
 import requests
-
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
+API_BASE_URL = os.getenv('SERVER_URL')
 FINGERPRINT_PORT = "COM5"
-FINGERPRINT_BAUDRATE = 57600
-API_BASE_URL = "http://172.20.10.2:8000"
+FINGERPRINT_BAUDRATE = 57600 
+
 
 def datetime_to_iso(obj):
     if isinstance(obj, datetime):
@@ -46,13 +48,16 @@ def listen_for_fingerprint(finger, latest_fingerprint_data):
                 user_data = get_employee_by_fingerprint(finger.finger_id)
 
                 if user_data:
+
                     print("User data:", user_data)
                     latest_fingerprint_data.value = user_data
+                    
                 else:
                     print("User not found in the API")
                     latest_fingerprint_data.value = {"error": "User not found"}
             else:
-                print("Fingerprint not found")
+                continue
+
             time.sleep(1)  # Add a small delay to prevent excessive CPU usage
     except KeyboardInterrupt:
         print("\nFingerprint listening stopped.")

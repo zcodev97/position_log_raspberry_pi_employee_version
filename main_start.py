@@ -47,14 +47,14 @@ def stream_readings():
                         yield f"data: {json.dumps({'error': 'Invalid fingerprint data type'})}\n\n"
                 except Exception as e:
                     yield f"data: {json.dumps({'error': f'Error processing fingerprint data: {str(e)}'})}\n\n"
-                if latest_fingerprint_data:
-                    latest_fingerprint_data.value = None  # Clear the data after sending
+                # if latest_fingerprint_data:
+                #     latest_fingerprint_data.value = None  # Clear the data after sending
             
             if card_data != last_sent_card:
                 last_sent_card = card_data
                 try:
                     if isinstance(card_data, dict):
-                        yield f"data: {json.dumps(card_data, default=str)}\n\n"
+                        yield f"data dict: {json.dumps(card_data, default=str)}\n\n"
                     elif isinstance(card_data, (str, bytes)):
                         if isinstance(card_data, bytes):
                             card_data = card_data.decode('utf-8')
@@ -63,8 +63,8 @@ def stream_readings():
                         yield f"data: {json.dumps({'error': 'Invalid card data type'})}\n\n"
                 except Exception as e:
                     yield f"data: {json.dumps({'error': f'Error processing card data: {str(e)}'})}\n\n"
-                if latest_card_data:
-                    latest_card_data.value = None  # Clear the data after sending
+                # if latest_card_data:
+                #     latest_card_data.value = None  # Clear the data after sending
             
             time.sleep(0.5)  # Check for updates every 0.5 seconds
 

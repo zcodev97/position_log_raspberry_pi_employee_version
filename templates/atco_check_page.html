@@ -3,120 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="{{ url_for('static', filename='js/tailwindcss.js') }}"></script>
+    <script>
+      const SERVER_URL = "http://192.168.0.194:8000";
+    </script>
     <title>User Information</title>
-    <style>
-      @import url("https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap");
-
-      body {
-        font-family: "Roboto", sans-serif;
-        line-height: 1.4;
-        margin: 0;
-        padding: 0;
-        background-color: #f0f2f5;
-        color: #333;
-      }
-      .container {
-        max-width: 960px;
-        margin: 20px auto;
-        padding: 10px;
-      }
-      .card {
-        background-color: white;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        padding: 15px;
-        margin-bottom: 15px;
-        transition: all 0.3s ease;
-      }
-      .card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-      }
-      #status {
-        font-weight: bold;
-        margin-bottom: 10px;
-        color: #4a4a4a;
-        text-align: center;
-        font-size: 24px;
-      }
-      .user-info {
-        font-size: 16px;
-        line-height: 1.6;
-      }
-      .user-name {
-        font-size: 24px;
-        font-weight: bold;
-      }
-      .duration {
-        font-size: 24px;
-        color: #4a4a4a;
-        text-align: center;
-        font-weight: 500;
-      }
-      .time-counter {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-top: 15px;
-        font-size: 20px;
-        color: #4a4a4a;
-        background-color: white;
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      .plus-button {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background-color: #4caf50;
-        color: white;
-        width: 80px; /* Updated width */
-        height: 80px; /* Updated height */
-        border-radius: 50%;
-        text-align: center;
-        line-height: 80px; /* Updated line-height */
-        font-size: 36px; /* Updated font size */
-        text-decoration: none;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: all 0.3s ease;
-      }
-      .plus-button:hover {
-        background-color: #45a049;
-        transform: scale(1.1);
-      }
-      .centered-content {
-        text-align: center;
-      }
-      .user-image {
-        max-width: 300px;
-        border-radius: 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        margin-bottom: 15px;
-        transition: transform 0.3s ease;
-      }
-      .user-image:hover {
-        transform: scale(1.05);
-      }
-      .utc-time,
-      .local-time {
-        font-size: 24px;
-        color: #4a4a4a;
-      }
-    </style>
   </head>
-  <body>
-    <div class="container">
-      <div id="status" class="card">Waiting for user data...</div>
-      <div id="fingerprintData" class="card centered-content"></div>
-      <div class="time-counter">
-        <div class="utc-time">UTC Time: <span id="utcTime"></span></div>
-        <div id="duration" class="duration"></div>
-        <div class="local-time">Local Time: <span id="localTime"></span></div>
+  <body class="font-roboto leading-normal m-0 p-0 bg-[#f0f2f5] text-[#333]">
+    <div class="max-w-[960px] mx-auto my-5 p-2.5">
+      <div
+        id="status"
+        class="font-bold mb-2.5 text-[#4a4a4a] text-center text-2xl bg-white rounded-lg shadow-sm p-4 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md"
+      >
+        Waiting for user data...
+      </div>
+
+      <div
+        id="fingerprintData"
+        class="text-center bg-white rounded-lg shadow-sm p-4 mb-4 transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-md"
+      ></div>
+
+      <div
+        class="flex justify-between items-center mt-4 text-xl text-[#4a4a4a] bg-white p-2.5 rounded-lg shadow-sm"
+      >
+        <div class="text-2xl text-[#4a4a4a]">
+          UTC Time: <span id="utcTime"></span>
+        </div>
+        <div
+          id="duration"
+          class="text-2xl text-[#4a4a4a] text-center font-medium"
+        ></div>
+        <div class="text-2xl text-[#4a4a4a]">
+          Local Time: <span id="localTime"></span>
+        </div>
       </div>
     </div>
-
-    <a href="./session_page.html" id="plusButton" class="plus-button">+</a>
+    <div class="flex justify-center items-center">
+      <div
+        class="bg-[#4caf50] text-white w-1/2 rounded-full text-center text-2xl py-2"
+        href="./session_page.html"
+        id="plusButton"
+      >
+        SESSION
+      </div>
+    </div>
 
     <script>
       const statusElement = document.getElementById("status");
@@ -165,10 +95,16 @@
         eventSource.onmessage = async function (event) {
           let data = JSON.parse(event.data);
 
-          console.log("Received fingerprint data:", data);
+          console.log(data);
+
+          if (data?.error?.includes("Invalid")) {
+            statusElement.textContent = "Loading....";
+            dataElement.innerHTML = "";
+            return;
+          }
 
           // Check if the user is a trainee
-          if (data.user_type.toLowerCase() === "trainee") {
+          if (data.user_type?.toString()?.toLowerCase() === "trainee") {
             console.log("Trainee detected. No action taken.");
             return; // Exit the function early
           }
@@ -179,6 +115,10 @@
           const userId = data.id;
           const imageValue = data.image;
 
+          localStorage.setItem("user_id", data.id);
+
+          if (data.id) await checkIn(data);
+
           // Remove unnecessary fields from the data
           delete data.id;
           delete data.card_id;
@@ -186,6 +126,7 @@
           delete data.created_at;
           delete data.image;
           delete data.user_type;
+          delete data.is_active;
 
           // Format the data for display
           const formattedData = Object.entries(data)
@@ -193,35 +134,22 @@
               if (key === "name") {
                 return ` ${value} `;
               }
-              return `<div class="user-name">${value}</div>`;
+              return `<div class="user-name">${
+                value.toString().includes("invalid") ? "Loading.." : value
+              }</div>`;
             })
             .join("<br>");
 
           // Display the formatted fingerprint data and image
           dataElement.innerHTML = `
-            <img src="http://127.0.0.1:8000/media/${imageValue}" alt="User Image" class="user-image"><br>
-            <div class="user-info">${formattedData}</div>
+            <img src="${imageValue}" 
+                 alt="User Image" 
+                 class="max-w-[150px] rounded-2xl shadow-sm mb-4  mx-auto">
+            <div class="text-base leading-relaxed">${formattedData}</div>
           `;
 
-          // Handle check-in and check-out
-          if (currentUser === userId) {
-            // If the same user checks in again, check them out
-            await checkOut(userId);
-            currentUser = null;
-            statusElement.textContent = "User checked out.";
-            clearInterval(durationInterval);
-            durationElement.textContent = "Duration: 00:00:00";
-          } else {
-            // If there's a current user, check them out first
-            if (currentUser) {
-              await checkOut(currentUser);
-              clearInterval(durationInterval);
-            }
-            // Check in the new user
-            await checkIn(userId);
-            currentUser = userId;
-            statusElement.textContent = "User checked in.";
-          }
+          // currentUser = data.id;
+          statusElement.textContent = "User checked in.";
         };
 
         eventSource.onerror = function (error) {
@@ -233,41 +161,17 @@
         };
       }
 
-      async function checkOut(userId) {
+      async function checkIn(data) {
         try {
-          const response = await fetch(
-            "http://localhost:8000/atco/check-out/",
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ user: userId }),
-            }
-          );
-          if (!response.ok) {
-            throw new Error("Check-out failed");
-          }
-          console.log("User checked out successfully");
-          isCheckedIn = false;
-          clearInterval(durationInterval);
-          durationInterval = null;
-          // The final duration value remains displayed
-        } catch (error) {
-          console.error("Error during check-out:", error);
-        }
-      }
-
-      async function checkIn(userId) {
-        try {
-          const response = await fetch("http://localhost:8000/atco/check-in/", {
+          const response = await fetch(`${SERVER_URL}/atco/check-in/`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              user: userId,
+              user: data.id,
               check_in_date: new Date().toISOString(),
+              position: "ACC",
               check_type: "fingerprint",
             }),
           });
@@ -277,6 +181,33 @@
           console.log("User checked in successfully");
           startTime = new Date();
           isCheckedIn = true;
+          durationElement.textContent = "Duration: 00:00:00";
+          if (durationInterval) {
+            clearInterval(durationInterval);
+          }
+          durationInterval = setInterval(updateDuration, 1000);
+        } catch (error) {
+          console.error("Error during check-in:", error);
+        }
+      }
+
+      async function checkOut(userId) {
+        try {
+          const response = await fetch(`${SERVER_URL}/atco/check-out/`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              user: userId,
+            }),
+          });
+          if (!response.ok) {
+            throw new Error("Check-out failed");
+          }
+          console.log("User checked out successfully");
+          startTime = new Date();
+
           durationElement.textContent = "Duration: 00:00:00";
           if (durationInterval) {
             clearInterval(durationInterval);
@@ -340,10 +271,18 @@
 
       plusButton.addEventListener("click", async function (event) {
         event.preventDefault(); // Prevent default navigation
+        console.log("test");
+        console.log(localStorage.getItem("user_id"));
 
+        await checkOut(localStorage.getItem("user_id"));
+        window.location.href = "session_page.html";
+
+        if (eventSource) {
+          eventSource.close();
+        }
         if (currentUser) {
           // Check out the current user
-          await checkOut(currentUser);
+
           // Update this line to keep the duration
           currentUser = null;
           // Don't clear the interval here, as it's already cleared in checkOut()
@@ -351,16 +290,9 @@
         }
 
         // Close EventSource before navigating
-        if (eventSource) {
-          eventSource.close();
-        }
 
         // Navigate to sessions.html
-        window.location.href = "session_page.html";
       });
-
-      // Remove the beforeunload event listener
-      // window.addEventListener("beforeunload", function (e) { ... });
     </script>
   </body>
 </html>
