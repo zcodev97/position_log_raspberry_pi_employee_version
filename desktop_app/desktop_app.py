@@ -73,6 +73,10 @@ class MainWindow(QMainWindow):
         # Clear cache on initialization
         self.system_tab.clear_web_view_cache()
 
+        # Add tab change event handler
+        self.tab_widget.currentChanged.connect(self.handle_tab_change)
+        self.last_tab_index = 0  # Keep track of the last selected tab
+
     def refresh_page(self):
         self.system_tab.refresh_page()
 
@@ -87,6 +91,20 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         event.ignore()
         self.close_application()
+
+    def handle_tab_change(self, index):
+        if index == 1:  # Admin tab index
+            dialog = PasswordDialog(self)
+            if dialog.exec_() == QDialog.Accepted:
+                if dialog.password_input.text() == "12345":
+                    self.last_tab_index = index
+                    return
+                else:
+                    QMessageBox.warning(self, "Incorrect Password", "The password you entered is incorrect.")
+            # If dialog is rejected or password is incorrect, switch back to the previous tab
+            self.tab_widget.setCurrentIndex(self.last_tab_index)
+        else:
+            self.last_tab_index = index
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
