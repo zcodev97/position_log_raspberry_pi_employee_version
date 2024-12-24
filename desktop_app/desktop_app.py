@@ -1,39 +1,38 @@
 import sys
 from PyQt5.QtCore import QUrl, Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QHBoxLayout, QWidget, QDialog, QLineEdit, QLabel, QMessageBox
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, 
+    QHBoxLayout, QWidget, QDialog, QLineEdit, QLabel, QMessageBox, QTabWidget)
 from PyQt5.QtWebEngineWidgets import QWebEngineView
-
-class PasswordDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Password Confirmation")
-        layout = QVBoxLayout(self)
-        
-        layout.addWidget(QLabel("Enter password to close:"))
-        self.password_input = QLineEdit(self)
-        self.password_input.setEchoMode(QLineEdit.Password)
-        layout.addWidget(self.password_input)
-        
-        self.submit_button = QPushButton("Submit", self)
-        self.submit_button.clicked.connect(self.accept)
-        layout.addWidget(self.submit_button)
+from tabs.system_tab import SystemTab
+from tabs.admin_tab import AdminTab
+from utils.password_dialog import PasswordDialog
+ 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Web View Desktop App")
-        self.setFixedSize(1024, 600)  # Set fixed window size
+        self.setFixedSize(1024, 600)
 
         # Create a central widget and layout
         central_widget = QWidget()
         layout = QVBoxLayout(central_widget)
         
-        # Create and add the web view
-        self.web_view = QWebEngineView()
-        self.web_view.setUrl(QUrl("http://127.0.0.1:5000/atco_check_page.html"))
-        layout.addWidget(self.web_view)
+        # Create tab widget
+        self.tab_widget = QTabWidget()
         
-        # Create a horizontal layout for buttons
+   
+        self.system_tab = SystemTab()
+        self.admin_tab = AdminTab()
+        self.tab_widget.addTab(self.system_tab, "System")
+        self.tab_widget.addTab(self.admin_tab, "Admin")
+
+   
+        
+        # Add tab widget to main layout
+        layout.addWidget(self.tab_widget)
+        
+        # Create button layout (rest of the button code remains the same)
         button_layout = QHBoxLayout()
         button_layout.addStretch()  # Add spacing from left
         
@@ -72,26 +71,22 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         
         # Clear cache on initialization
-        self.clear_web_view_cache()  # {{ edit_6 }}
+        self.system_tab.clear_web_view_cache()
 
-    def clear_web_view_cache(self):  # {{ edit_6 }}
-        profile = self.web_view.page().profile()  # Get the profile of the web view
-        profile.clearHttpCache()  # Clear the HTTP cache
-
-    def refresh_page(self):  # {{ edit_1 }}
-        self.web_view.reload()  # Reload the web view
+    def refresh_page(self):
+        self.system_tab.refresh_page()
 
     def close_application(self):
         dialog = PasswordDialog(self)
         if dialog.exec_() == QDialog.Accepted:
             if dialog.password_input.text() == "12345":
-                QApplication.quit()  # This will close the entire application
+                QApplication.quit()
             else:
                 QMessageBox.warning(self, "Incorrect Password", "The password you entered is incorrect.")
 
     def closeEvent(self, event):
-        event.ignore()  # Ignore the close event
-        self.close_application()  # Call our custom close method
+        event.ignore()
+        self.close_application()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
